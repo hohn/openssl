@@ -84,9 +84,7 @@ jobs:
         LANGUAGE: ${{ matrix.language }}
       run: |
         set -xu
-        SARIF_FILE="/home/runner/work/openssl/results/$LANGUAGE-builtin.sarif"
         DATABASE_DIR="/home/runner/work/_temp/codeql_databases/$LANGUAGE"
-        TARGET_SARIF_FILE="openssl-$LANGUAGE.sarif"
         echo "Cleaning up database in $DATABASE_DIR"
         for SUB_DIR in log results working; do
           rm -rf $DATABASE_DIR/$SUB_DIR 
@@ -95,15 +93,27 @@ jobs:
         DATABASE_ZIP="openssl-$LANGUAGE-db.zip"
         zip -r "$DATABASE_ZIP" "$DATABASE_DIR"
         echo "::set-output name=zip::$DATABASE_ZIP"
+
+    - name: Prepare sarif file
+      id: prepare-sarif
+      env:
+        LANGUAGE: ${{ matrix.language }}
+      run: |
+        set -xu
+        SARIF_FILE="/home/runner/work/openssl/results/$LANGUAGE-builtin.sarif"
+        TARGET_SARIF_FILE="openssl-$LANGUAGE.sarif"
         echo "copying SARIF"
         cp $SARIF_FILE $TARGET_SARIF_FILE
+        echo "::set-output name=sarif::$TARGET_SARIF_FILE"
+
     - name: Upload CodeQL database
       uses: actions/upload-artifact@v2
       with:
         name: openssl-${{ matrix.language }}-db
         path: ${{ steps.database-cleanup.outputs.zip }}
+
     - name: Upload SARIF File
       uses: actions/upload-artifact@v2
       with:
-        name: $TARGET_SARIF_FILE
-        path: ${{ steps.database-cleanup.outputs.zip }}
+        name: openssl-${{ matrix.language }}.sarif
+        path: ${{ steps.prepare-sarif.outputs.sarif }}
