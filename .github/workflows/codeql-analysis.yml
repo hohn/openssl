@@ -21,6 +21,10 @@ on:
     branches: [ codeql-db-build ]
   schedule:
     - cron: '37 12 * * 6'
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'Manual trigger'    
 
 jobs:
   analyze:
